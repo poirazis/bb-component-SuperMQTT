@@ -1,0 +1,97 @@
+{
+  "type": "component",
+  "metadata": {},
+  "schema": {
+    "name": "bb-component-SuperMQTT",
+    "friendlyName": "Super MQTT",
+    "description": "An MQTT client component for Budibase",
+    "icon": "EmailOutline",
+    "context": {
+      "type": "static",
+      "scope": "global",
+      "values": [
+        { "key": "connected", "label": "Connected" },
+        { "key": "lastMessage", "label": "Last Message" },
+        { "key": "at", "label": "Last Message At" }
+      ]
+    },
+    "settings": [
+      {
+        "type": "text",
+        "key": "host",
+        "label": "Host",
+        "defaultValue": "localhost"
+      },
+      {
+        "type": "text",
+        "key": "port",
+        "label": "Port",
+        "defaultValue": "8083",
+        "required": true
+      },
+      {
+        "type": "text",
+        "key": "username",
+        "label": "Username"
+      },
+      {
+        "type": "text",
+        "key": "password",
+        "label": "Password"
+      },
+      {
+        "type": "text",
+        "key": "topic",
+        "label": "Topic",
+        "defaultValue": "test",
+        "required": true
+      },
+      {
+        "type": "number",
+        "key": "keepAlive",
+        "label": "Keep Alive",
+        "defaultValue": 60,
+        "min": 0
+      },
+      {
+        "type": "number",
+        "key": "maxReconnect",
+        "label": "Max Reconnect",
+        "defaultValue": 10,
+        "min": 0
+      },
+      {
+        "type": "boolean",
+        "key": "jsonMessage",
+        "label": "JSON Message"
+      },
+      {
+        "section": true,
+        "name": "events",
+        "settings": [
+          {
+            "type": "event",
+            "key": "onConnect",
+            "label": "On Connect"
+          },
+          {
+            "type": "event",
+            "key": "onDisconnect",
+            "label": "On Disconnect"
+          },
+          {
+            "type": "event",
+            "key": "onMessage",
+            "label": "On Message",
+            "context": [
+              {
+                "key": "message",
+                "label": "message"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}
