@@ -9,6 +9,8 @@
   export let maxReconnect;
   export let topic = "mqtt";
   export let jsonMessage;
+  export let showTest;
+  export let showStatus = true;
 
   export let onConnect;
   export let onDisconnect;
@@ -60,9 +62,11 @@
       client = null;
       connected = undefined;
       if (!topic) return;
+      status = "Invalid Topic";
     }
 
     client = mqtt.connect(url, options);
+    status = "Connecting";
 
     client.on("connect", function () {
       status = "Connected";
@@ -97,12 +101,11 @@
       }
 
       onMessage?.({ topic, message: decoded });
-      console.log("Message Received : ", decoded);
     });
 
     client.on("reconnect", function () {
       onDisconnect?.();
-      console.log("Reconnecting...");
+      status = "Reconnecting";
     });
   };
 
@@ -114,8 +117,10 @@
 </script>
 
 <div use:styleable={$component.styles}>
-  <Provider data={{ lastMessage: decoded, at: lastMessageTs, connected }} />
-  {#if inBuilder}
+  <Provider
+    data={{ lastMessage: decoded, at: lastMessageTs, connected, status }}
+  />
+  {#if inBuilder && showTest}
     <div class="super-mqtt">
       <div class="super-mqtt-status">
         <span class:connected>{status} - {host}</span>
@@ -135,16 +140,28 @@
         </div>
       {/if}
     </div>
+  {:else}
+    <div class="super-mqtt" class:connected>
+      <i class="ri-plug-fill" />
+      {#if showStatus}
+        <span>{status}</span>
+      {/if}
+    </div>
   {/if}
 </div>
 
 <style>
   .super-mqtt {
-    padding: 1rem;
     display: flex;
     justify-items: space-between;
     align-items: center;
-    font-size: 16px;
+    gap: 0.5rem;
+    font-size: 13px;
+    color: var(--spectrum-global-color-gray-500);
+
+    &.connected {
+      color: var(--spectrum-global-color-green-500);
+    }
   }
   .super-mqtt-test {
     padding-left: 2rem;
@@ -157,8 +174,6 @@
     display: flex;
     flex-direction: column;
     justify-items: space-between;
-  }
-  .connected {
-    color: var(--spectrum-global-color-green-500);
+    color: var(--spectrum-global-color-gray-500);
   }
 </style>

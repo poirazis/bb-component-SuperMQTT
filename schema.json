@@ -10,7 +10,8 @@
       "type": "static",
       "scope": "global",
       "values": [
-        { "key": "connected", "label": "Connected" },
+        { "key": "connected", "label": "Connected", "type": "boolean" },
+        { "key": "status", "label": "Status", "type": "string" },
         { "key": "lastMessage", "label": "Last Message" },
         { "key": "at", "label": "Last Message At" }
       ]
@@ -28,6 +29,12 @@
         "label": "Port",
         "defaultValue": "8083",
         "required": true
+      },
+      {
+        "type": "text",
+        "key": "clientId",
+        "label": "Client ID",
+        "placeholder": "Auto"
       },
       {
         "type": "text",
@@ -64,6 +71,18 @@
         "type": "boolean",
         "key": "jsonMessage",
         "label": "JSON Message"
+      },
+      {
+        "type": "boolean",
+        "key": "showTest",
+        "label": "Show Test Panel",
+        "defaultValue": false
+      },
+      {
+        "type": "boolean",
+        "key": "showStatus",
+        "label": "Show Status",
+        "defaultValue": true
       },
       {
         "section": true,
