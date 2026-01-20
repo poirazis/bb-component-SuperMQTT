@@ -1,5 +1,6 @@
 <script>
   import { getContext, onDestroy } from "svelte";
+  import mqtt from "mqtt";
 
   export let host;
   export let port;
@@ -19,9 +20,7 @@
   const { styleable, builderStore, Provider } = getContext("sdk");
   const component = getContext("component");
 
-  import mqtt from "mqtt/dist/mqtt.esm";
-
-  $: url = "ws://" + host + ":" + (port || "8083") + "/mqtt";
+  let url = "ws://" + host + ":" + (port || "8083") + "/mqtt";
 
   const options = {
     // Clean session
@@ -38,9 +37,9 @@
   let testResultReceive;
   let decoded;
   let lastMessageTs;
-
-  $: inBuilder = $builderStore.inBuilder;
-  $: initializeClient(url, options, topic);
+  let inBuilder;
+  let failedConnectionAttempts = 0;
+  let maxFailedAttempts = 5;
 
   const handleTest = (e) => {
     testResultPost = "Posting...";
@@ -56,62 +55,100 @@
     );
   };
 
-  const initializeClient = (url, options) => {
+  const initializeClient = () => {
     if (client || !topic) {
-      client.end();
-      client = null;
-      connected = undefined;
+      if (client) {
+        client.end();
+        client = null;
+        connected = undefined;
+      }
       if (!topic) return;
       status = "Invalid Topic";
     }
 
-    client = mqtt.connect(url, options);
-    status = "Connecting";
+    try {
+      client = mqtt.connect(url, options);
 
-    client.on("connect", function () {
-      status = "Connected";
-      connected = true;
-      onConnect?.();
-      // Subscribe to a topic
-      client.subscribe(topic, function (err) {
-        if (!err) {
-          statusTopic = "Subscribed";
-        } else console.log(err);
+      status = "Connecting";
+
+      client.on("connect", function () {
+        status = "Connected";
+        connected = true;
+        failedConnectionAttempts = 0;
+        onConnect?.();
+        // Subscribe to a topic
+        client.subscribe(topic, function (err) {
+          if (!err) {
+            statusTopic = "Subscribed";
+          } else console.log(err);
+        });
       });
-    });
 
-    // Receive messages
-    // message comes in as a buffer and needs to be converted to string.
-    client.on("message", function (topic, message) {
-      lastMessageTs = new Date();
+      // Receive messages
+      // message comes in as a buffer and needs to be converted to string.
+      client.on("message", function (topic, message) {
+        lastMessageTs = new Date();
 
-      if (testResultPost)
-        testResultReceive =
-          "Received Successfully - " + new Date().toUTCString();
+        if (testResultPost)
+          testResultReceive =
+            "Received Successfully - " + new Date().toUTCString();
 
-      if (jsonMessage) {
-        try {
-          var payload = message?.toString();
-          decoded = JSON.parse(payload ?? "{}");
-        } catch (ex) {
-          decoded = {};
+        if (jsonMessage) {
+          try {
+            var payload = message?.toString();
+            decoded = JSON.parse(payload ?? "{}");
+          } catch (ex) {
+            decoded = {};
+          }
+        } else {
+          decoded = message?.toString();
         }
-      } else {
-        decoded = message?.toString();
-      }
 
-      onMessage?.({ topic, message: decoded });
-    });
+        onMessage?.({ topic, message: decoded });
+      });
 
-    client.on("reconnect", function () {
-      onDisconnect?.();
-      status = "Reconnecting";
-    });
+      client.on("reconnect", function () {
+        failedConnectionAttempts++;
+        if (failedConnectionAttempts >= maxFailedAttempts) {
+          status = "Error: Max reconnection attempts reached";
+          client.end();
+          client = null;
+          connected = false;
+          onDisconnect?.();
+        } else {
+          onDisconnect?.();
+          status = `Reconnecting (${failedConnectionAttempts}/${maxFailedAttempts})`;
+        }
+      });
+
+      client.on("error", function (error) {
+        failedConnectionAttempts++;
+        if (failedConnectionAttempts >= maxFailedAttempts) {
+          status = "Error: Max reconnection attempts reached";
+          client.end();
+          client = null;
+          connected = false;
+        } else {
+          status = `Connection error: ${error.message}`;
+        }
+      });
+    } catch (error) {
+      status = "Error: " + error.message;
+    }
   };
+
+  // Watch for changes
+  $: if (host || port || topic) {
+    failedConnectionAttempts = 0;
+    url = "ws://" + host + ":" + (port || "8083") + "/mqtt";
+    initializeClient();
+  }
+
+  $: inBuilder = $builderStore.inBuilder;
 
   onDestroy(() => {
     if (connected) onDisconnect?.();
-    client.end();
+    if (client) client.end();
     client = undefined;
   });
 </script>
