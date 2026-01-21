@@ -26,11 +26,14 @@
         "defaultValue": "localhost"
       },
       {
-        "type": "text",
-        "key": "port",
-        "label": "Port",
-        "defaultValue": "8083",
-        "required": true
+        "type": "select",
+        "key": "protocol",
+        "label": "Protocol",
+        "defaultValue": "wss",
+        "options": [
+          { "label": "WS", "value": "ws" },
+          { "label": "WSS", "value": "wss" }
+        ]
       },
       {
         "type": "text",

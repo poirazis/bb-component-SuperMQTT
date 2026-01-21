@@ -3,7 +3,8 @@
   import mqtt from "mqtt";
 
   export let host;
-  export let port;
+
+  export let protocol = "wss";
   export let username;
   export let password;
   export let keepAlive;
@@ -20,7 +21,7 @@
   const { styleable, builderStore, Provider } = getContext("sdk");
   const component = getContext("component");
 
-  let url = "ws://" + host + ":" + (port || "8083") + "/mqtt";
+  let url = protocol + "://" + host;
 
   const options = {
     // Clean session
@@ -51,7 +52,7 @@
         if (!error) {
           testResultPost = "Posted Successfully - " + new Date().toUTCString();
         }
-      }
+      },
     );
   };
 
@@ -138,9 +139,9 @@
   };
 
   // Watch for changes
-  $: if (host || port || topic) {
+  $: if (host || protocol || topic) {
     failedConnectionAttempts = 0;
-    url = "ws://" + host + ":" + (port || "8083") + "/mqtt";
+    url = protocol + "://" + host;
     initializeClient();
   }
 
